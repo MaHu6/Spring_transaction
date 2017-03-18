@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd"
+
+>
+
+    <!--引入外部属性文件-->
+    <context:property-placeholder location="jdbc.properties"></context:property-placeholder>
+
+    <!--配置c3p0连接池-->
+    <bean id="comboPooledDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.driverClass}"></property>
+        <property name="jdbcUrl" value="${jdbc.url}"></property>
+        <property name="user" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+    </bean>
+
+    <!--配置业务层的类-->
+    <bean id="accountService" class="com.mahu.demo2.Service.ServiceImpl.AccountServiceImpl">
+        <property name="accountDAO" ref="accountDAO"></property>
+
+
+    </bean>
+
+
+
+    <!--配置DAO层的类-->
+    <bean id="accountDAO" class="com.mahu.demo2.DAO.DAOImpl.AccountDAOImpl">
+        <property name="dataSource" ref="comboPooledDataSource"></property>
+    </bean>
+
+
+
+    <!--配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="comboPooledDataSource"></property>
+    </bean>
+
+    <!--配置业务层的代理-->
+    <bean id="accountServiceProxy" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <!--配置目标对象-->
+        <property name="target" ref="accountService"></property>
+
+        <!--注入事务管理-->
+        <property name="transactionManager" ref="transactionManager"></property>
+
+        <!--注入事务的属性-->
+        <property name="transactionAttributes">
+            <props>
+                <!--
+                prop 格式
+                    * PROPAGATION :事务的传播行为
+                    * ISOLATION   ：事物的隔离级别
+                    * ReadOnly    :只读   (不可以对数据库进行修改)
+                    * -Exception  ：发生哪些异常，事务回滚
+                    * +Exception  ：发生哪些异常，事务不回滚
+                -->
+                <prop key="transfer" >PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+
+    </bean>
+
+
+
+
+</beans>
